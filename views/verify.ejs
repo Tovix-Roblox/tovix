@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="language" content="English">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Roblox Account Verification</h1>
+        <p>Copy the following text and paste it into your <b>roblox bio</b>:</p>
+        <div class="verification-box">
+            <input type="text" id="verificationString" value="<%= verificationString %>" readonly>
+            <button onclick="CopyText()">Copy</button>
+        </div>
+        <form action="/api/verify/check/" method="POST">
+            <input type="text" name="userId" placeholder="Enter your roblox user ID" required>
+            <input type="hidden" name="verificationString" value="<%= verificationString %>">
+            <button type="submit">I've done this.</button>
+        </form>        
+        <% if (error) { %>
+            <p class="error"><%= error %> </p>
+        <% } %>
+    </div>
+
+    <script>
+        function CopyText() {
+            const textBox = document.getElementById("verificationString");
+            textBox.select();
+            document.execCommand("copy");
+            alert("Copied to clipboard!");
+        }
+    </script>
+</body>
+</html>
