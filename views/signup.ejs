@@ -9,11 +9,41 @@
 <link rel="stylesheet" href="/signup.css">
 </head>
 <body>
+
 <div id="signup-box-p1">
 <h1>Welcome to Tovix</h1>
 <p>To get started, please fill in the details below to create your account.</p>
 <div class="box1-divider">
+<form id="signup-form" action="/signup" method="POST">
+<label for="email">Email</label>
+<input type="email" id="email" name="email" placeholder="e.g. amIaREALuser@gmail.com" required>
+
+<label for="username">Username</label>
+<input type="text" id="username" name="username" placeholder="e.g. amIaREALuser" required>
+
+<label for="password">Password</label>
+<input type="password" id="password" name="password" placeholder="e.g. isTHISmyR3@lPa55w0rd? / *********************" required>
+
+<div class="form-options">
+<input type="checkbox" id="show-password">
+<label for="show-password">Show password</label>
 </div>
+
+<button type="button" class="p1-continue" id="continue-btn"><b>Continue</b></button>
+</form>
 </div>
+
+</div>
+<script>
+document.getElementById("continue-btn").addEeventListener("click", function() {
+let email = document.getElementById("email").value.trim();
+let username = document.getElementById("username")/value.trim();
+let password = document.getElementById("password").value.trim();
+
+if (email !== "" && username !== "" && password !== "") {
+document.getElementById("signup-box-p1").style.display = "none";
+*/ PUT CODE FOR /VERIFY AUTH HERE
+}
+}
 </body>
 </html>
