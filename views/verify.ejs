@@ -18,6 +18,7 @@
         <form action="/api/verify/check/" method="POST">
             <input type="text" name="userId" placeholder="Enter your roblox user ID" required>
             <input type="hidden" name="verificationString" value="<%= verificationString %>">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button type="submit">I've done this.</button>
         </form>        
         <% if (error) { %>
@@ -26,11 +27,15 @@
     </div>
 
     <script>
-        function CopyText() {
+        async function CopyText() {
             const textBox = document.getElementById("verificationString");
-            textBox.select();
-            document.execCommand("copy");
-            alert("Copied to clipboard!");
+            try {
+                await navigator.clipboard.writeText(textBox.value);
+                alert("Copied to clipboard!");
+            } catch (err) {
+                console.error("Copy failed:", err);
+                alert("Failed to copy. Please try manually.");
+            }
         }
     </script>
 </body>

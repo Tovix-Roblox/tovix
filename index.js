@@ -5,29 +5,43 @@ const axios = require("axios");
 const mysql = require("mysql");
 const crypto = require("crypto");
 const cookieParser = require("cookie-parser");
+const csurf = require("csurf");
 
 const port = 3000;
 
+// Database connection with error handling
 const db = mysql.createPool({
     host: "localhost",
     user: "root",
     password: "yourpassword",
     database: "yourdatabase",
+    connectionLimit: 10,
 });
 
+db.getConnection((err) => {
+    if (err) {
+        console.error("Database connection failed:", err);
+    } else {
+        console.log("Connected to MySQL database.");
+    }
+});
+
+// Middleware
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(csurf({ cookie: true }));
 
+// User session middleware
 app.use((req, res, next) => {
     const sessionToken = req.cookies.session_token;
     if (sessionToken) {
         db.query(
-            "SELECT * FROM users WHERE session_cookie = ?", 
-            [sessionToken], 
+            "SELECT * FROM users WHERE session_cookie = ?",
+            [sessionToken],
             (err, results) => {
                 if (!err && results.length > 0) {
                     req.user = {
@@ -44,95 +58,29 @@ app.use((req, res, next) => {
     }
 });
 
+// Routes
 app.get("/", (req, res) => {
     res.render("index", { title: "Tovix" });
-});
-
-app.get("/workspace-selection", (req, res) => {
-    if (!req.user) return res.redirect("/auth/login");
-    
-    db.query(
-        "SELECT id, name FROM workspaces WHERE user_id = ?", 
-        [req.user.id], 
-        (err, workspaces) => {
-            if (err) {
-                return res.render("workspace-selection", { 
-                    title: "Select a Workspace", 
-                    workspaces: [], 
-                    error: "Error loading workspaces."
-                });
-            }
-            res.render("workspace-selection", { title: "Select a Workspace", workspaces });
-        }
-    );
-});
-
-app.get("/workspace/:workspace_id", (req, res) => {
-    if (!req.user) return res.redirect("/auth/login");
-
-    db.query(
-        "SELECT * FROM workspaces WHERE id = ?", 
-        [req.params.workspace_id], 
-        (err, workspace) => {
-            if (err || workspace.length === 0) return res.status(404).send("Workspace not found.");
-            res.render("workspace-dashboard", { 
-                title: `Workspace - ${workspace[0].name}`, 
-                workspace: workspace[0] 
-            });
-        }
-    );
-});
-
-app.get("/auth/register/", (req, res) => {
-    res.render("get-started", { title: "Tovix - Register" });
 });
 
 app.get("/auth/verify/api/code/", async (req, res) => {
     try {
         const response = await axios.get("http://localhost.polyonax-group.org:3000/api/verification-code");
         res.render("verify", { 
-            title: "Tovix - Verify", 
-            verificationString: response.data.verificationString, 
-            error: null 
+            title: "Tovix - Verify",
+            verificationString: response.data.verificationString,
+            error: null,
+            csrfToken: req.csrfToken(),
         });
     } catch (error) {
         res.render("verify", { 
-            title: "Tovix - Verify", 
-            verificationString: "", 
-            error: "Error fetching verification code." 
+            title: "Tovix - Verify",
+            verificationString: "",
+            error: "Error fetching verification code.",
+            csrfToken: req.csrfToken(),
         });
     }
 });
-
-app.post("/auth/verify/", async (req, res) => {
-    try {
-        await axios.post("http://localhost.polyonax-group.org:3000/api/verify", req.body);
-        res.redirect("/success");
-    } catch (error) {
-        res.render("verify", { 
-            title: "Tovix - Verify", 
-            verificationString: "", 
-            error: "Error verifying account." 
-        });
-    }
-});
-
-function generateVerificationString() {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!£$%^&*()#@";
-    const emojis = ["😀", "🔥", "💎", "🚀", "🎉", "🤖", "🌟", "💡"];
-    let result = "";
-    for (let i = 0; i < 25; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-    for (let i = 0; i < 5; i++) result += emojis[Math.floor(Math.random() * emojis.length)];
-    return result;
-}
-
-app.get("/api/verification-code", (req, res) => {
-    res.json({ verificationString: generateVerificationString() });
-});
-
-function generateSessionCookie() {
-    return crypto.randomBytes(32).toString("hex");
-}
 
 app.post("/api/verify/check/", async (req, res) => {
     const { userId, verificationString } = req.body;
@@ -151,7 +99,7 @@ app.post("/api/verify/check/", async (req, res) => {
             const profilePictureResponse = await axios.get(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png`);
             const profilePicture = profilePictureResponse.data.data[0].imageUrl;
 
-            const sessionCookie = generateSessionCookie();
+            const sessionCookie = crypto.randomBytes(32).toString("hex");
 
             db.query(
                 "INSERT INTO users (user_id, username, profile_picture, session_cookie) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE username = VALUES(username), profile_picture = VALUES(profile_picture), session_cookie = VALUES(session_cookie)",
@@ -161,8 +109,12 @@ app.post("/api/verify/check/", async (req, res) => {
                         console.error("Database error:", err);
                         return res.json({ success: false, message: "Database error." });
                     }
-                    res.cookie("session_token", sessionCookie, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
-                    return res.redirect("/workspace-selection");
+                    res.cookie("session_token", sessionCookie, { 
+                        maxAge: 24 * 60 * 60 * 1000, 
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production",
+                    });
+                    return res.status(302).redirect("/workspace-selection");
                 }
             );
         } else {
@@ -174,6 +126,7 @@ app.post("/api/verify/check/", async (req, res) => {
     }
 });
 
+// Logout
 app.get("/logout", (req, res) => {
     if (req.cookies.session_token) {
         db.query("UPDATE users SET session_cookie = NULL WHERE session_cookie = ?", [req.cookies.session_token], (err) => {
@@ -184,6 +137,7 @@ app.get("/logout", (req, res) => {
     res.redirect("/");
 });
 
+// Start server
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
