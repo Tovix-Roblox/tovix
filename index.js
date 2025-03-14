@@ -1,17 +1,12 @@
-import express from "express";
-import path from "path";
-import axios from "axios";
-import mysql from "mysql";
-import crypto from "crypto";
-import cookieParser from "cookie-parser";
-import csurf from "csurf";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
+const express = require("express");
 const app = express();
+const path = require("path");
+const axios = require("axios");
+const mysql = require("mysql");
+const crypto = require("crypto");
+const cookieParser = require("cookie-parser");
+const csurf = require("csurf");
+
 const port = 3000;
 
 // Database connection with error handling
@@ -71,14 +66,14 @@ app.get("/", (req, res) => {
 app.get("/auth/verify/api/code/", async (req, res) => {
     try {
         const response = await axios.get("http://localhost.polyonax-group.org:3000/api/verification-code");
-        res.render("verify", {
+        res.render("verify", { 
             title: "Tovix - Verify",
             verificationString: response.data.verificationString,
             error: null,
             csrfToken: req.csrfToken(),
         });
     } catch (error) {
-        res.render("verify", {
+        res.render("verify", { 
             title: "Tovix - Verify",
             verificationString: "",
             error: "Error fetching verification code.",
@@ -114,8 +109,8 @@ app.post("/api/verify/check/", async (req, res) => {
                         console.error("Database error:", err);
                         return res.json({ success: false, message: "Database error." });
                     }
-                    res.cookie("session_token", sessionCookie, {
-                        maxAge: 24 * 60 * 60 * 1000,
+                    res.cookie("session_token", sessionCookie, { 
+                        maxAge: 24 * 60 * 60 * 1000, 
                         httpOnly: true,
                         secure: process.env.NODE_ENV === "production",
                     });
