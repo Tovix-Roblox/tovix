@@ -1,0 +1,30 @@
+{
+  "name": "ejs-server",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Express server rendering EJS templates",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cookie-parser": "^1.4.6",
+    "crypto": "^1.0.1",
+    "csurf": "^1.11.0",
+    "ejs": "^3.1.9",
+    "express": "^4.19.2",
+    "mysql": "^2.18.1",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["express", "ejs", "server"],
+  "author": "Your Name",
+  "license": "MIT"
+}
