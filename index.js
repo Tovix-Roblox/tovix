@@ -7,16 +7,18 @@ const crypto = require("crypto");
 const cookieParser = require("cookie-parser");
 const csurf = require("csurf");
 const dotenv = require("dotenv");
+const fs = require('fs');
+
 require("dotenv").config();  // This loads the environment variables from the .env file
 
 const port = 3000;
 
 // Database connection with error handling
 const db = mysql.createPool({
-    host: "localhost",
-    user: "root",
-    password: "yourpassword",
-    database: "yourdatabase",
+    host: "38.22.104.155",
+    user: "u4464_d7d28C6qcy",
+    password: "rs7.v00aJuSLvI!+1D+oi=IM",
+    database: "s4464_test",
     connectionLimit: 10,
 });
 
@@ -239,7 +241,7 @@ app.get("/no-account", (req, res) => {
 });
 
 
-// Start server
+//Start server
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+console.log(`Server running.`);
 });
